@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EV Battery & Vehicle AI Coach Dashboard</title>
+  <!-- Cache buster query string v3.0 -->
+  <link rel="stylesheet" href="styles.css?v=3.0">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="app-header">
+    <div class="brand-container">
+      <div class="brand-logo-icon">🤖</div>
+      <div>
+        <h1 class="brand-title">EV AI BATTERY & VEHICLE COACH</h1>
+        <p class="brand-subtitle">Real-Time BMS Telemetry, Problem Solutions & Score Boosters</p>
+      </div>
+    </div>
+
+    <div class="header-right-actions">
+      <!-- Vehicle Selector -->
+      <div class="vehicle-selector-group">
+        <span>🚗 / 🛵 Vehicle:</span>
+        <select id="vehicleSelect" class="vehicle-select" onchange="onVehicleChange()">
+          <optgroup label="EV Cars (4-Wheelers)">
+            <option value="car_tesla_model3" selected>Tesla Model 3 / EV Sedan (60 kWh)</option>
+            <option value="car_leaf">Compact EV Hatchback (40 kWh)</option>
+          </optgroup>
+          <optgroup label="EV 2-Wheelers (Scooters)">
+            <option value="scooter_ather450x">Ather 450X Scooter (3.7 kWh)</option>
+            <option value="scooter_olas1pro">Ola S1 Pro Scooter (4.0 kWh)</option>
+            <option value="scooter_iqube">TVS iQube City Scooter (3.4 kWh)</option>
+          </optgroup>
+        </select>
+      </div>
+
+      <!-- Predictive Warning Notification Bell -->
+      <div class="notif-bell-container">
+        <button class="bell-btn" onclick="toggleNotifDropdown()">
+          🔔
+          <span id="notifBadgeCount" class="notif-badge-count">1</span>
+        </button>
+
+        <div id="notifDropdown" class="notif-dropdown">
+          <div class="notif-header">
+            <span>🔮 PREDICTIVE PROBLEM WARNINGS</span>
+            <span style="font-size: 11px; color: var(--primary-cyan); cursor: pointer;" onclick="fetchPredictiveNotifications()">Refresh</span>
+          </div>
+          <div id="notifFeed">
+            <!-- Predictive Warnings injected here -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Interactive Controls Toolbar -->
+  <section class="control-toolbar">
+    <div class="toolbar-title">
+      <span>🎛️ Simulation Controls:</span>
+    </div>
+
+    <div class="control-item">
+      <label for="speedSlider">Speed:</label>
+      <input type="range" id="speedSlider" min="0" max="150" value="60" oninput="updateControlState()">
+      <span id="speedVal" class="slider-val">60 km/h</span>
+    </div>
+
+    <div class="control-item">
+      <label for="tempSlider">Ambient Temp:</label>
+      <input type="range" id="tempSlider" min="-5" max="45" value="28" oninput="updateControlState()">
+      <span id="tempVal" class="slider-val">28 °C</span>
+    </div>
+
+    <button id="chargeToggleBtn" class="toggle-btn" onclick="toggleCharger()">🔌 Plug Charger</button>
+    <button id="fastChargeToggleBtn" class="toggle-btn" onclick="toggleFastCharge()">⚡ Fast Charge</button>
+    <button id="stressTestToggleBtn" class="toggle-btn" onclick="toggleStressTest()">🔥 Stress Test</button>
+  </section>
+
+  <!-- Dashboard Main Container -->
+  <main class="dashboard-container">
+
+    <!-- MAIN HERO CENTERPIECE: AI BATTERY & VEHICLE COACH WIDGET -->
+    <section class="main-ai-coach-hero">
+      <div class="ai-hero-top-row">
+        <div class="ai-avatar-group">
+          <div class="ai-hero-avatar">🤖</div>
+          <div>
+            <h2 class="ai-hero-title">AI Battery & Vehicle Intelligence Coach</h2>
+            <div class="ai-hero-subtitle">⚡ Problem Solution Protocol & Score Booster Engine Active</div>
+          </div>
+        </div>
+
+        <div class="ai-hero-actions">
+          <div class="insight-mode-switcher">
+            <button id="modeBatteryBtn" class="mode-tab-btn active" onclick="switchCoachMode('battery')">🔋 Battery Insights</button>
+            <button id="modeVehicleBtn" class="mode-tab-btn" onclick="switchCoachMode('vehicle')">🚗 Vehicle Systems</button>
+          </div>
+          <button class="btn-health-check" onclick="runFullHealthCheckup()">⚡ Run Full Health Checkup</button>
+        </div>
+      </div>
+
+      <!-- Hero Body Grid: Health Score Ring + Dynamic AI Insights & Solution Stream -->
+      <div class="ai-hero-body-grid">
+        
+        <!-- Left: Diagnostic Health Score Widget -->
+        <div class="ai-health-score-widget">
+          <div id="scoreDisplayNum" class="score-display-num">96.5</div>
+          <div class="score-display-label">Overall Health Index</div>
+          <div id="scoreGradeBadge" class="score-grade-badge">GRADE A+ (EXCELLENT)</div>
+          <button style="margin-top: 14px; background: linear-gradient(135deg, var(--accent-neon-green), #00b894); border: none; color: #090d16; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 12px; cursor: pointer;" onclick="runFullHealthCheckup()">📈 Improve Score to 100</button>
+        </div>
+
+        <!-- Right: AI Insight & Solution Cards Feed -->
+        <div id="aiCoachGrid" class="coach-cards-grid">
+          <!-- AI Solution Cards injected dynamically -->
+        </div>
+
+      </div>
+    </section>
+
+    <!-- COMPACT SECONDARY METRIC CARDS (SOH, SOC, Temp, Vehicle) -->
+    <section class="compact-stats-grid">
+
+      <!-- Small SOH Card -->
+      <div class="compact-glass-card">
+        <div class="compact-card-header">
+          <span class="compact-card-title">💚 Battery Health (SOH)</span>
+          <span id="sohBadge" class="card-badge badge-green">HEALTHY</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+          <div>
+            <div id="sohValue" class="compact-stat-val">94.2<span class="compact-stat-unit">%</span></div>
+            <div class="compact-sub-text">Internal Resistance: <span id="irValue" style="color: var(--text-main);">18.5 mΩ</span></div>
+          </div>
+          <div style="text-align: right;">
+            <div id="cellDeltaV" style="font-family: var(--font-heading); font-size: 16px; font-weight: 700; color: var(--primary-cyan);">14 mV</div>
+            <div class="compact-sub-text">Delta V</div>
+          </div>
+        </div>
+        <div class="chart-container-compact">
+          <canvas id="cellVoltageChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Small SOC Card -->
+      <div class="compact-glass-card">
+        <div class="compact-card-header">
+          <span class="compact-card-title">🔋 Battery Charge (SOC)</span>
+          <span id="chargingStateBadge" class="card-badge badge-blue">DISCHARGING</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+          <div>
+            <div id="socValue" class="compact-stat-val">72.0<span class="compact-stat-unit">%</span></div>
+            <div class="compact-sub-text">Terminal: <span id="packVoltage" style="color: var(--text-main);">378.4 V</span></div>
+          </div>
+          <div style="text-align: right;">
+            <div id="estimatedRange" style="font-family: var(--font-heading); font-size: 20px; font-weight: 700; color: var(--accent-neon-green);">324 km</div>
+            <div class="compact-sub-text">Est. Range</div>
+          </div>
+        </div>
+        <div class="compact-sub-text" style="margin-top: 10px; display: flex; justify-content: space-between;">
+          <span>Current Draw: <strong id="currentValue" style="color: #fff;">+14.2 A</strong></span>
+          <span>Power: <strong id="powerValue" style="color: var(--primary-cyan);">5.37 kW</strong></span>
+        </div>
+      </div>
+
+      <!-- Small Thermal & Safety Card -->
+      <div class="compact-glass-card">
+        <div class="compact-card-header">
+          <span class="compact-card-title">🌡️ Temperature & Cooling</span>
+          <span id="thermalStatusBadge" class="card-badge badge-green">NORMAL</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+          <div>
+            <div id="packTemp" class="compact-stat-val">31.5<span class="compact-stat-unit">°C</span></div>
+            <div class="compact-sub-text">Pack Mean Temp</div>
+          </div>
+          <div style="text-align: right;">
+            <div id="coolingType" style="font-family: var(--font-heading); font-size: 14px; font-weight: 700; color: var(--text-main);">Liquid Cooling</div>
+            <div class="compact-sub-text">Architecture</div>
+          </div>
+        </div>
+        <div class="compact-sub-text" style="margin-top: 10px; display: flex; justify-content: space-between;">
+          <span>Sensors Max: <strong id="tempS2" style="color: var(--primary-cyan);">32.8°C</strong></span>
+          <span>BMS Board: <strong id="tempBMS" style="color: #fff;">34.7°C</strong></span>
+        </div>
+      </div>
+
+      <!-- Small Vehicle Diagnostics & TPMS Card -->
+      <div class="compact-glass-card">
+        <div class="compact-card-header">
+          <span class="compact-card-title">🚗 Powertrain & TPMS</span>
+          <span id="vehicleHealthBadge" class="card-badge badge-green">OPTIMAL</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+          <div>
+            <div id="motorTemp" class="compact-stat-val">48.5<span class="compact-stat-unit">°C</span></div>
+            <div class="compact-sub-text">Motor Temp</div>
+          </div>
+          <div style="text-align: right;">
+            <div id="inverterEff" style="font-family: var(--font-heading); font-size: 18px; font-weight: 700; color: var(--primary-cyan);">97.8%</div>
+            <div class="compact-sub-text">Inverter Eff.</div>
+          </div>
+        </div>
+        <div class="compact-sub-text" style="margin-top: 10px; display: flex; justify-content: space-between;">
+          <span>Min TPMS Tire: <strong id="psiMin" style="color: var(--accent-neon-green);">35.8 PSI</strong></span>
+          <span>Isolation: <strong id="isolationValue" style="color: #fff;">480 MΩ</strong></span>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Tabs Container for Analytics & Predictive Maintenance -->
+    <section class="tabs-container">
+      <div class="tab-buttons-nav">
+        <button class="tab-nav-btn active" onclick="switchTab('analyticsTab', this)">📊 Battery Analytics</button>
+        <button class="tab-nav-btn" onclick="switchTab('predictiveTab', this)">🔮 Predictive Maintenance & RUL</button>
+      </div>
+
+      <div id="analyticsTab" class="tab-content active">
+        <div class="analytics-grid">
+          <div class="compact-glass-card">
+            <h3 style="font-family: var(--font-heading); font-size: 14px; margin-bottom: 10px;">Historical SOH & Capacity Degradation Trend</h3>
+            <div class="chart-box">
+              <canvas id="sohHistoryChart"></canvas>
+            </div>
+          </div>
+
+          <div class="compact-glass-card">
+            <h3 style="font-family: var(--font-heading); font-size: 14px; margin-bottom: 10px;">Temperature vs Power Draw Scatter</h3>
+            <div class="chart-box">
+              <canvas id="tempPowerScatterChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="predictiveTab" class="tab-content">
+        <div class="pred-summary-grid">
+          <div class="pred-kpi-card">
+            <div class="pred-kpi-title">Remaining Useful Life (RUL)</div>
+            <div id="rulKmVal" class="pred-kpi-val">315,000 km</div>
+            <div class="pred-kpi-sub">Before 80% EOL SOH</div>
+          </div>
+
+          <div class="pred-kpi-card">
+            <div class="pred-kpi-title">Remaining Charge Cycles</div>
+            <div id="rulCyclesVal" class="pred-kpi-val" style="color: var(--primary-cyan);">923 cycles</div>
+            <div class="pred-kpi-sub">At current discharge depth</div>
+          </div>
+
+          <div class="pred-kpi-card">
+            <div class="pred-kpi-title">Time to EOL Threshold</div>
+            <div id="rulMonthsVal" class="pred-kpi-val" style="color: var(--primary-blue);">262.5 mos</div>
+            <div class="pred-kpi-sub">~ 21.8 Years</div>
+          </div>
+
+          <div class="pred-kpi-card">
+            <div class="pred-kpi-title">Cell Imbalance Risk Score</div>
+            <div id="imbalanceScoreVal" class="pred-kpi-val" style="color: var(--accent-neon-green);">11.6 / 100</div>
+            <div class="pred-kpi-sub">Low Risk</div>
+          </div>
+        </div>
+
+        <div class="analytics-grid">
+          <div class="compact-glass-card">
+            <h3 style="font-family: var(--font-heading); font-size: 14px; margin-bottom: 10px;">12-Month SOH Capacity Degradation Projection</h3>
+            <div class="chart-box">
+              <canvas id="forecastChart"></canvas>
+            </div>
+          </div>
+
+          <div class="compact-glass-card">
+            <h3 style="font-family: var(--font-heading); font-size: 14px; margin-bottom: 10px;">BMS Replacement & Anomaly Logs</h3>
+            <div id="anomaliesList" class="sub-metrics-list" style="gap: 8px; font-size: 12px;">
+              <!-- Anomaly logs -->
+            </div>
+            <div style="margin-top: 14px; padding: 10px; background: rgba(0, 242, 254, 0.08); border-radius: 8px; border: 1px solid var(--border-glow);">
+              <div style="font-weight: 700; color: var(--primary-cyan); font-size: 12px;">OFFICIAL ADVISORY:</div>
+              <div id="replacementAdvisoryText" style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                Battery Health Excellent. No replacement required.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Health Audit & Score Improvement Plan Modal -->
+  <div id="healthCheckModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 class="modal-title">⚡ 50-Point AI Health Audit & Score Booster Plan</h2>
+        <button class="modal-close-btn" onclick="closeHealthCheckModal()">✕</button>
+      </div>
+
+      <div class="score-hero-ring">
+        <div id="healthScoreNum" class="score-num">96.5</div>
+        <div id="healthGradeText" class="score-grade">GRADE A+ (EXCELLENT)</div>
+      </div>
+
+      <!-- Subsystem Breakdown -->
+      <div style="margin: 16px 0;">
+        <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--primary-cyan);">Subsystem Health Audit Breakdown:</h3>
+        <div id="subsystemList">
+          <!-- Subsystems -->
+        </div>
+      </div>
+
+      <!-- SCORE IMPROVEMENT PLAN SECTION TO REACH 100/100 -->
+      <div class="score-booster-section">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h3 style="font-size: 14px; color: var(--accent-neon-green); font-family: var(--font-heading);">📈 How to Improve Score to 100/100 (Optimization Plan):</h3>
+        </div>
+        <div id="scoreBoosterList">
+          <!-- Score Improvement items -->
+        </div>
+        <button class="btn-apply-boosters" onclick="applyAllScoreBoosters()">⚡ Auto-Apply All Score Boosters (Target 100/100)</button>
+      </div>
+
+      <button style="margin-top: 16px; width: 100%; padding: 10px; background: transparent; border: 1px solid var(--border-glass); color: var(--text-muted); font-family: var(--font-heading); font-size: 13px; border-radius: 8px; cursor: pointer;" onclick="closeHealthCheckModal()">Close Audit</button>
+    </div>
+  </div>
+
+  <script src="app.js?v=3.0"></script>
+</body>
+</html>
